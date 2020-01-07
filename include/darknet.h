@@ -328,6 +328,8 @@ struct layer {
     int   * indexes;
     int   * input_layers;
     int   * input_sizes;
+    float **layers_output;
+    float **layers_delta;
     int   * map;
     int   * counts;
     float ** sums;
@@ -575,6 +577,10 @@ struct layer {
 
     float *gt_gpu;
     float *a_avg_gpu;
+
+    int *input_sizes_gpu;
+    float **layers_output_gpu;
+    float **layers_delta_gpu;
 #ifdef CUDNN
     cudnnTensorDescriptor_t srcTensorDesc, dstTensorDesc;
     cudnnTensorDescriptor_t srcTensorDesc16, dstTensorDesc16;
@@ -609,6 +615,7 @@ typedef struct network {
     layer *layers;
     float *output;
     learning_rate_policy policy;
+    int benchmark_layers;
 
     float learning_rate;
     float learning_rate_min;
@@ -822,6 +829,7 @@ typedef struct load_args {
     int augment_speed;
     int letter_box;
     int show_imgs;
+    int dontuse_opencv;
     float jitter;
     int flip;
     int blur;
@@ -867,6 +875,7 @@ typedef struct box_label {
 LIB_API network *load_network(char *cfg, char *weights, int clear);
 LIB_API network *load_network_custom(char *cfg, char *weights, int clear, int batch);
 LIB_API network *load_network(char *cfg, char *weights, int clear);
+LIB_API void free_network(network net);
 
 // network.c
 LIB_API load_args get_base_args(network *net);
@@ -892,9 +901,9 @@ LIB_API void reset_rnn(network *net);
 LIB_API float *network_predict_image(network *net, image im);
 LIB_API float *network_predict_image_letterbox(network *net, image im);
 LIB_API float validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, float thresh_calc_avg_iou, const float iou_thresh, const int map_points, int letter_box, network *existing_net);
-LIB_API void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, int ngpus, int clear, int dont_show, int calc_map, int mjpeg_port, int show_imgs);
+LIB_API void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, int ngpus, int clear, int dont_show, int calc_map, int mjpeg_port, int show_imgs, int benchmark_layers);
 LIB_API void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, float thresh,
-    float hier_thresh, int dont_show, int ext_output, int save_labels, char *outfile, int letter_box);
+    float hier_thresh, int dont_show, int ext_output, int save_labels, char *outfile, int letter_box, int benchmark_layers);
 LIB_API int network_width(network *net);
 LIB_API int network_height(network *net);
 LIB_API void optimize_picture(network *net, image orig, int max_layer, float scale, float rate, float thresh, int norm);
